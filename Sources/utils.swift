@@ -17,3 +17,31 @@ func DateFrom(_ str: String) -> Date? {
 struct Error: Swift.Error {
     var message: String
 }
+
+struct Result<T> {
+    var val: T?
+    var error: Swift.Error?
+
+    init(value: T, error: Swift.Error?) {
+        self.val = value
+    }
+
+    init(value: T?, error: Swift.Error) {
+        self.error = error
+    }
+
+    var value: T {
+        get {
+            return val!
+        }
+    }
+}
+
+func result<T>(_ closure: @autoclosure () throws -> T) -> Result<T> {
+    do {
+        let val = try closure()
+        return Result(value: val, error: nil)
+    } catch (let err) {
+        return Result<T>(value: nil, error: err)
+    }
+}

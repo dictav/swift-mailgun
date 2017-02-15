@@ -16,11 +16,11 @@ extension MailgunTests {
             return s
         }
 
-        var ret = result(try throwFunc(str: "hoge"))
+        var ret = result{ try throwFunc(str: "hoge") }
         XCTAssertNil(ret.error)
         XCTAssertEqual(ret.value, "hoge")
 
-        ret = result(try throwFunc(str: nil))
+        ret = result{ try throwFunc(str: nil) }
         XCTAssertNotNil(ret.error)
         XCTAssertNil(ret.val)
     }

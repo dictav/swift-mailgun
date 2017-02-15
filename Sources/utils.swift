@@ -24,6 +24,14 @@ struct Result<T> {
         self.error = error
     }
 
+    /**
+     It is self-responsibility to call value.
+
+     gurad result.error == nil else {
+     return
+     }
+     print(result.value)
+     */
     var value: T {
         get {
             return val!
@@ -33,9 +41,9 @@ struct Result<T> {
 
 typealias ResultCompletion<T> = (Result<T>) -> ()
 
-func result<T>(_ closure: @autoclosure () throws -> T) -> Result<T> {
+func result<T>(_ closure: @autoclosure () throws -> () throws -> T) -> Result<T> {
     do {
-        let val = try closure()
+        let val = try closure()()
         return Result(value: val, error: nil)
     } catch (let err) {
         return Result<T>(value: nil, error: err)

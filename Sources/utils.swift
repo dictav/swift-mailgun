@@ -1,10 +1,16 @@
 import Foundation
 
-// typealias JSON = Any
-// typealias JSONObject = [String:Any]
-// typealias JSONArray = [JSONObject]
-// extension JSONObject: JSON {}
-// extension JSONArray: JSON {}
+protocol JSON {}
+typealias JSONObject = [String:JSON]
+typealias JSONArray = [JSON]
+
+extension String: JSON {}
+extension Int: JSON {}
+extension Float: JSON {}
+extension Bool: JSON {}
+extension Dictionary: JSON {}
+extension Array: JSON {}
+
 
 func DateFrom(_ str: String) -> Date? {
     let dateFormatter = DateFormatter()
@@ -36,6 +42,8 @@ struct Result<T> {
         }
     }
 }
+
+typealias ResultCompletion<T> = (Result<T>) -> ()
 
 func result<T>(_ closure: @autoclosure () throws -> T) -> Result<T> {
     do {

@@ -1,22 +1,25 @@
 import Foundation
 
 let endpoint = "https://api.mailgun.net/v3"
-let timeoutSeconds = 10_000_000_000_000 as UInt64 // 10sec
+let timeout: DispatchTimeInterval = .seconds(30)
 struct Client {
-    var aSession : URLSession?
+    let session: URLSession
 
-    var session: URLSession {
-        get {
-            return self.aSession ?? URLSession.shared
-        }
+    init(key: String, session: URLSession = URLSession.shared) {
+        let apiKey = "api:\(key)"
+        let data = apiKey.data(using: String.Encoding.utf8)!
+        let credential = data.base64EncodedString()
+
+        let config = session.configuration
+        config.httpAdditionalHeaders = ["Authorization" : "Basic \(credential)"]
+        self.session = URLSession(configuration: config)
     }
 }
 
 extension Client {
     func get(path: String, opts: [String:String] = [:], completion: @escaping ResultCompletion<JSON>) -> URLSessionDataTask {
-        let s = URLSession.shared
         let url = URL(string: endpoint + path)!
-        let task = s.dataTask(with: url) {
+        let task = session.dataTask(with: url) {
             (data, res, err) in
             guard err == nil else {
                 let result = Result<JSON>(value: nil, error: err!)
@@ -31,19 +34,28 @@ extension Client {
                 return
             }
 
-            if let d = data {
-                do {
-                    let json = try JSONSerialization.jsonObject(with: d, options: .allowFragments)
-                    let result = Result<JSON>(value: json as! JSON, error: nil)
-                    completion(result)
-
-                } catch(let err) {
-                    let result = Result<JSON>(value: nil, error: err)
-                    completion(result)
-                }
+            guard let d = data else {
+                completion( Result<JSON>(value: nil, error: Error(message: "unexpected error")))
+                return
             }
-            let result = Result<JSON>(value: nil, error: Error(message: "unexpected error"))
-            completion(result)
+
+            let jsonResult = result{
+                try JSONSerialization.jsonObject(with: d, options: .allowFragments)
+            }
+            guard jsonResult.error == nil else {
+                completion(Result<JSON>(value: nil, error: jsonResult.error!))
+                return
+            }
+
+            guard let json = convertToJSON(jsonResult.value) else {
+                completion(Result<JSON>(
+                    value: nil,
+                    error: Error(message: "convertToJSON: unexpected error")
+                ))
+                return
+            }
+
+            completion(Result<JSON>(value: json, error: nil))
         }
         task.resume()
         return task
@@ -51,20 +63,19 @@ extension Client {
 
     func getSync(path: String, opts: [String:String] = [:]) -> (Result<JSON>) {
         let sema = DispatchSemaphore(value: 0)
-        var result = Result<JSON>(value: nil, error: Error(message:"unexpected error"))
+        var result = Result<JSON>(value: nil, error: Error(message:"initial result"))
         let task = get(path: path, opts: opts) {
             res in
             result = res
             sema.signal()
         }
 
-        let timeout = DispatchTime(uptimeNanoseconds: timeoutSeconds)
-        switch sema.wait(timeout: timeout) {
+        switch sema.wait(timeout: .now() + timeout) {
         case .success:
             return result
         case .timedOut:
             task.cancel()
-            return Result<JSON>(value: nil, error: Error(message: "get Google timeout error"))
+            return Result<JSON>(value: nil, error: Error(message: "timeout error"))
         }
     }
 }

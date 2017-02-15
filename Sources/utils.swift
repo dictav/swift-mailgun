@@ -1,17 +1,5 @@
 import Foundation
 
-protocol JSON {}
-typealias JSONObject = [String:JSON]
-typealias JSONArray = [JSON]
-
-extension String: JSON {}
-extension Int: JSON {}
-extension Float: JSON {}
-extension Bool: JSON {}
-extension Dictionary: JSON {}
-extension Array: JSON {}
-
-
 func DateFrom(_ str: String) -> Date? {
     let dateFormatter = DateFormatter()
     dateFormatter.locale = Locale(identifier: "en_US_POSIX")

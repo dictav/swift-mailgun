@@ -43,9 +43,7 @@ extension Domain {
 }
 
 extension Domain {
-    static func getList(client: Client, limit: Int = 20, skip: Int = 0) -> URLSessionDataTask {
-        return client.get(path: "/domains", opts: ["skip": skip.description, "limit": limit.description]) {
-            _ in
-        }
+    static func getList(client: Client, limit: Int = 20, skip: Int = 0) -> Result<JSON> {
+        return client.getSync(path: "/domains", opts: ["skip": skip.description, "limit": limit.description])
     }
 }

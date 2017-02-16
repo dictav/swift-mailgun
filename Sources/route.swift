@@ -33,14 +33,22 @@ func extractMatchHeader(_ str: String) -> (key: String, value: String)? {
 enum RouteFilter {
     case matchRecipient(NSRegularExpression)
     case matchMatchHeader(key: String, value: NSRegularExpression)
+    case catchAll
 
     init(expression: String) throws {
+        if expression == "catch_all()" {
+            self = .catchAll
+            return
+        }
+
         if let recipient = extractMatchRecipient(expression) {
             self = .matchRecipient(try! NSRegularExpression(pattern: recipient))
+            return
         }
 
         if let (key, value) = extractMatchHeader(expression) {
             self = .matchMatchHeader(key: key, value: try! NSRegularExpression(pattern: value))
+            return
         }
 
         throw Error(message: "Unexpected expression for RouteFilter: \(expression)")
@@ -52,6 +60,8 @@ enum RouteFilter {
             return "match_recipient(\"\(recipient)\")"
         case .matchMatchHeader(let key, let value):
             return "match_header(\"\(key)\", \"\(value)\")"
+        case .catchAll:
+            return "catch_all()"
         }
     }
 }
@@ -104,14 +114,14 @@ struct Route {
 }
 
 extension Route {
-    init?(JSON: [String:Any]) {
+    init?(JSON: JSONObject) {
         guard
             let id = JSON["id"] as? String,
             let description = JSON["description"] as? String,
             let createdAt = JSON["created_at"] as? String,
-            let actions = JSON["actions"] as? [String],
+            let actions = JSON["actions"] as? JSONArray,
             let priority = JSON["priority"] as? Int,
-            let expression = JSON["extension"] as? String
+            let expression = JSON["expression"] as? String
             else { return nil }
 
         guard let date = DateFrom(createdAt) else {
@@ -126,7 +136,10 @@ extension Route {
         }
 
         var routeActions = [RouteAction]()
-        for exp in actions {
+        for json in actions {
+            guard let exp = json as? String else {
+                continue
+            }
             if let act = RouteAction(expression: exp) {
                 routeActions.append(act)
             }
@@ -152,7 +165,7 @@ extension Route {
         return Result<JSON>(value: nil, error: err)
     }
 
-    static func update(route: Route) -> Error? {
+    static func update(_ route: Route) -> Error? {
         return Error(message: "please implement")
     }
 

@@ -49,3 +49,13 @@ func result<T>(_ closure: @autoclosure () throws -> () throws -> T) -> Result<T>
         return Result<T>(value: nil, error: err)
     }
 }
+
+func substring(in str: String, range: NSRange) -> String? {
+    guard range.location != NSNotFound else {
+        return nil
+    }
+
+    let start = str.index(str.startIndex, offsetBy: range.location)
+    let end = str.index(str.startIndex, offsetBy: range.location + range.length)
+    return str.substring(with: start..<end)
+}

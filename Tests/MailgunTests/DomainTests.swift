@@ -8,8 +8,8 @@ extension MailgunTests {
             return
         }
 
-        let client = Client(key: key)
-        let result = Domain.getList(client: client)
+        Mailgun(key: key)
+        let result = Domain.getList()
         XCTAssertNil(result.error)
     }
 }

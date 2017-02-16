@@ -43,7 +43,7 @@ extension Domain {
 }
 
 extension Domain {
-    static func getList(client: Client, limit: Int = 20, skip: Int = 0) -> Result<JSON> {
-        return client.getSync(path: "/domains", opts: ["skip": skip.description, "limit": limit.description])
+    static func getList(limit: Int = 100, skip: Int = 0) -> Result<JSON> {
+        return getSync(path: "/domains", opts: ["skip": skip.description, "limit": limit.description])
     }
 }

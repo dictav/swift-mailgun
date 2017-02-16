@@ -11,7 +11,7 @@ extension MailgunTests {
     func testFuncResult() {
         func throwFunc(str: String?) throws -> String {
             guard let s = str else {
-                throw Mailgun.Error(message:"string is nil")
+                throw Error(message:"string is nil")
             }
             return s
         }

@@ -21,7 +21,7 @@ func convertToJSON(_ a: Any) -> JSON? {
     }
 }
 
-struct JSONObject: JSON {
+struct JSONObject: JSON, Sequence {
     var dict: [String:JSON]
 
     init?(from: [String:Any]) {
@@ -40,12 +40,16 @@ struct JSONObject: JSON {
         set { dict[key] = newValue }
     }
 
+    func makeIterator() -> DictionaryIterator<String, JSON> {
+        return self.dict.makeIterator()
+    }
+
     var description: String {
         return dict.description
     }
 }
 
-struct JSONArray: JSON {
+struct JSONArray: JSON, Sequence {
     var array: [JSON]
 
     init?(from: [Any]) {
@@ -62,5 +66,9 @@ struct JSONArray: JSON {
     subscript(index: Int) -> JSON {
         get { return array[index] }
         set { array[index] = newValue}
+    }
+
+    func makeIterator() -> IndexingIterator<Array<JSON>> {
+        return self.array.makeIterator()
     }
 }

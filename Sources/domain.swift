@@ -4,6 +4,7 @@ enum SpamAction: String {
     case disabled
     case tag
 }
+
 struct Domain {
     var createdAt: Date
     var name: String
@@ -15,7 +16,7 @@ struct Domain {
 }
 
 extension Domain {
-    static func from(JSON: [String:Any]) -> Domain? {
+    init?(JSON: [String:Any]) {
         guard
             let createdAt = JSON["created_at"] as? String,
             let name = JSON["name"] as? String,
@@ -30,15 +31,13 @@ extension Domain {
             return nil
         }
 
-        return Domain(
-            createdAt: date,
-            name: name,
-            smtpLogin: smtpLogin,
-            smtpPassword: smtpPassword,
-            spamAction: SpamAction(rawValue: spamAction) ?? SpamAction.disabled,
-            state: state,
-            wildcard: wildcard
-        )
+        self.createdAt = date
+        self.name = name
+        self.smtpLogin = smtpLogin
+        self.smtpPassword = smtpPassword
+        self.spamAction = SpamAction(rawValue: spamAction) ?? SpamAction.disabled
+        self.state = state
+        self.wildcard = wildcard
     }
 }
 

@@ -1,4 +1,5 @@
 import Foundation
+import Result
 
 let endpoint = "https://api.mailgun.net/v3"
 let timeout: DispatchTimeInterval = .seconds(30)
@@ -14,7 +15,7 @@ func Mailgun(key: String, config: URLSessionConfiguration = URLSession.shared.co
     urlSession = URLSession(configuration: config)
 }
 
-func get(path: String, opts: [String:String] = [:], completion: @escaping ResultCompletion<JSON>) -> URLSessionDataTask {
+func get(path: String, opts: [String:String] = [:], completion: @escaping ResultCompletion<JSON,Error>) -> URLSessionDataTask {
     guard let session = urlSession else {
         fatalError("Please setup with Mailgun()")
     }
@@ -23,48 +24,43 @@ func get(path: String, opts: [String:String] = [:], completion: @escaping Result
     let task = session.dataTask(with: url) {
         (data, res, err) in
         guard err == nil else {
-            let result = Result<JSON>(value: nil, error: err!)
-            completion(result)
+            completion(.failure(err as! Error))
             return
         }
 
         let httpRes = res as! HTTPURLResponse
         guard 200..<300 ~= httpRes.statusCode else {
-            let result = Result<JSON>(value: nil, error: Error(message: "status error"))
-            completion(result)
+            completion(.failure(Error(message: "status error")))
             return
         }
 
         guard let d = data else {
-            completion( Result<JSON>(value: nil, error: Error(message: "unexpected error")))
+            completion(.failure(Error(message: "unexpected error")))
             return
         }
 
-        let jsonResult = result{
+        let jsonResult = Result<Any,Error>(attempt:{
             try JSONSerialization.jsonObject(with: d, options: .allowFragments)
-        }
+        })
         guard jsonResult.error == nil else {
-            completion(Result<JSON>(value: nil, error: jsonResult.error!))
+            completion(.failure(jsonResult.error!))
             return
         }
 
-        guard let json = convertToJSON(jsonResult.value) else {
-            completion(Result<JSON>(
-                value: nil,
-                error: Error(message: "convertToJSON: unexpected error")
-            ))
+        guard let json = convertToJSON(jsonResult.value!) else {
+            completion(.failure(Error(message: "convertToJSON: unexpected error")))
             return
         }
 
-        completion(Result<JSON>(value: json, error: nil))
+        completion(.success(json))
     }
     task.resume()
     return task
 }
 
-func getSync(path: String, opts: [String:String] = [:]) -> (Result<JSON>) {
+func getSync(path: String, opts: [String:String] = [:]) -> Result<JSON,Error> {
     let sema = DispatchSemaphore(value: 0)
-    var result = Result<JSON>(value: nil, error: Error(message:"initial result"))
+    var result: Result<JSON, Error> = .failure(Error(message:"initial result"))
     let task = get(path: path, opts: opts) {
         res in
         result = res
@@ -76,6 +72,6 @@ func getSync(path: String, opts: [String:String] = [:]) -> (Result<JSON>) {
         return result
     case .timedOut:
         task.cancel()
-        return Result<JSON>(value: nil, error: Error(message: "timeout error"))
+        return .failure(Error(message: "timeout error"))
     }
 }

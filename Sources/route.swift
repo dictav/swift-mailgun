@@ -1,4 +1,5 @@
 import Foundation
+import Result
 
 func extractMatchRecipient(_ str: String) -> String? {
     // Matches a string like 'match_recipient(".*@bar.com")'
@@ -128,9 +129,7 @@ extension Route {
             return nil
         }
 
-        let filterResult = result {
-            try RouteFilter(expression: expression)
-        }
+        let filterResult = Result<RouteFilter,Error>( try RouteFilter(expression: expression) )
         guard filterResult.error == nil else {
             return nil
         }
@@ -150,19 +149,18 @@ extension Route {
         self.createdAt = date
         self.actions = routeActions
         self.priority = priority
-        self.expression = filterResult.value
+        self.expression = filterResult.value!
     }
 
 }
 
 extension Route {
-    static func list(limit: Int = 100, skip: Int = 0) -> Result<JSON> {
+    static func list(limit: Int = 100, skip: Int = 0) -> Result<JSON,Error> {
         return getSync(path: "/routes", opts: ["skip": skip.description, "limit": limit.description])
     }
 
-    static func create(description: String, filter: RouteFilter, actions: [RouteAction], priority: Int = 0) -> Result<JSON> {
-        let err = Error(message: "please implement")
-        return Result<JSON>(value: nil, error: err)
+    static func create(description: String, filter: RouteFilter, actions: [RouteAction], priority: Int = 0) -> Result<JSON,Error> {
+        return .failure(Error(message: "please implement"))
     }
 
     static func update(_ route: Route) -> Error? {

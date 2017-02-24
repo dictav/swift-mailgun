@@ -1,4 +1,5 @@
 import Foundation
+import Result
 
 enum SpamAction: String {
     case disabled
@@ -42,7 +43,7 @@ extension Domain {
 }
 
 extension Domain {
-    static func list(limit: Int = 100, skip: Int = 0) -> Result<JSON> {
+    static func list(limit: Int = 100, skip: Int = 0) -> Result<JSON,Error> {
         return getSync(path: "/domains", opts: ["skip": skip.description, "limit": limit.description])
     }
 }

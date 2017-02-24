@@ -13,8 +13,6 @@ class MailgunTests: XCTestCase {
 
     static var allTests : [(String, (MailgunTests) -> () throws -> Void)] {
         return [
-            ("testResult", testResult),
-            ("testFuncResult", testFuncResult),
             ("testDateFrom", testDateFrom),
         ]
     }

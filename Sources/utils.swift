@@ -1,4 +1,5 @@
 import Foundation
+import Result
 
 func DateFrom(_ str: String) -> Date? {
     let dateFormatter = DateFormatter()
@@ -12,43 +13,7 @@ struct Error: Swift.Error {
     var message: String
 }
 
-struct Result<T> {
-    var val: T?
-    var error: Swift.Error?
-
-    init(value: T, error: Swift.Error?) {
-        self.val = value
-    }
-
-    init(value: T?, error: Swift.Error) {
-        self.error = error
-    }
-
-    /**
-     It is self-responsibility to call value.
-
-     gurad result.error == nil else {
-     return
-     }
-     print(result.value)
-     */
-    var value: T {
-        get {
-            return val!
-        }
-    }
-}
-
-typealias ResultCompletion<T> = (Result<T>) -> ()
-
-func result<T>(_ closure: @autoclosure () throws -> () throws -> T) -> Result<T> {
-    do {
-        let val = try closure()()
-        return Result(value: val, error: nil)
-    } catch (let err) {
-        return Result<T>(value: nil, error: err)
-    }
-}
+typealias ResultCompletion<Value,Error: Swift.Error> = (Result<Value,Error>) -> ()
 
 func substring(in str: String, range: NSRange) -> String? {
     guard range.location != NSNotFound else {
